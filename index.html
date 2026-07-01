@@ -37,9 +37,18 @@
         .ice-block { width: 90px; height: 45px; background: #fff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: 1s; position: relative; }
         .fragment { position: absolute; width: 30px; height: 20px; background: #fff; border-radius: 5px; opacity: 1; transition: 1.2s ease-out; pointer-events: none; }
         
-        .bear { position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; transition: left 0.6s linear, bottom 0.3s ease-out, transform 2s, opacity 2s; }
-        .foot-pad { fill: #333; }
-        .tear { fill: #4fc3f7; animation: cry 1.5s infinite; }
+        /* 곰 기본 설정 (점프 가속도 반영) */
+        .bear { position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; transition: left 0.6s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.3s cubic-bezier(0.42, 0, 0.58, 1), transform 0.25s ease-out, opacity 2s; }
+        
+        /* 곰 이미지와 눈물을 하나로 묶는 래퍼 */
+        .img-wrapper { position: relative; display: inline-block; }
+        
+        /* 곰 숨쉬기 애니메이션 */
+        .img-wrapper img { width: 100%; height: auto; display: block; transform-origin: bottom center; animation: breathe 3s ease-in-out infinite alternate; }
+        @keyframes breathe { 0% { transform: scaleY(1); } 100% { transform: scaleY(1.03) scaleX(0.98); } }
+
+        /* 눈물 CSS (곰 이미지 래퍼 안에서 절대좌표를 가짐) */
+        .css-tear { position: absolute; background-color: #4fc3f7; border-radius: 50%; z-index: 30; animation: cry 1.5s infinite; pointer-events: none; }
         @keyframes cry { 0% { transform: translateY(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
 
         /* 파괴율 및 대사 팝업 */
@@ -62,8 +71,6 @@
         .dance-baby { animation: jump-baby 0.5s infinite alternate-reverse; }
         @keyframes jump-mama { from { transform: translateY(0); } to { transform: translateY(-60px); } }
         @keyframes jump-baby { from { transform: translateY(0); } to { transform: translateY(-80px); } }
-        .wave-arm { transform-origin: top center; animation: wave 0.2s infinite alternate; }
-        @keyframes wave { from { transform: rotate(-40deg); } to { transform: rotate(40deg); } }
         .bubble { position: absolute; top: -110px; background: white; border-radius: 25px; padding: 15px 30px; color: #000; font-weight: bold; font-size: 22px; white-space: nowrap; z-index: 100; }
     </style>
 </head>
@@ -89,25 +96,17 @@
     <div class="stepping-stones" id="stones-container"></div>
     
     <div id="baby-bear" class="bear" style="bottom: 165px; left: 5%;">
-        <svg width="100" height="120" viewBox="0 0 100 120">
-            <circle cx="50" cy="40" r="25" fill="#fff" />
-            <ellipse cx="50" cy="80" rx="35" ry="30" fill="#fff" />
-            <g class="limb-l"><rect x="15" y="70" width="18" height="35" rx="9" fill="#fff"/><circle class="foot-pad" cx="24" cy="95" r="3"/></g>
-            <g class="limb-r"><rect x="67" y="70" width="18" height="35" rx="9" fill="#fff"/><circle class="foot-pad" cx="76" cy="95" r="3"/></g>
-            <circle cx="42" cy="35" r="3" fill="#000" /><circle cx="58" cy="35" r="3" fill="#000" />
-            <circle class="tear" cx="42" cy="42" r="3" fill="#4fc3f7" />
-        </svg>
+        <div class="img-wrapper" style="width: 80px;">
+            <img src="bear.png" alt="새끼 북극곰">
+            <div class="css-tear" style="width: 5px; height: 5px; top: 22%; left: 74%;"></div>
+        </div>
     </div>
 
     <div id="mama-bear" class="bear" style="bottom: 120px; right: 5%;">
-        <svg width="140" height="160" viewBox="0 0 120 140">
-            <circle cx="60" cy="40" r="30" fill="#fff" />
-            <ellipse cx="60" cy="90" rx="50" ry="40" fill="#fff" />
-            <g class="limb-l"><rect x="10" y="80" width="24" height="45" rx="12" fill="#fff"/><circle class="foot-pad" cx="22" cy="115" r="4"/></g>
-            <g class="limb-r"><rect x="86" y="80" width="24" height="45" rx="12" fill="#fff"/><circle class="foot-pad" cx="98" cy="115" r="4"/></g>
-            <circle cx="50" cy="38" r="4" fill="#000" /><circle cx="70" cy="38" r="4" fill="#000" />
-            <circle class="tear" cx="50" cy="45" r="4" fill="#4fc3f7" />
-        </svg>
+        <div class="img-wrapper" style="width: 140px; transform: scaleX(-1);">
+            <img src="bear.png" alt="어미 북극곰">
+            <div class="css-tear" style="width: 7px; height: 7px; top: 22%; left: 74%;"></div>
+        </div>
     </div>
 </div>
 
@@ -204,8 +203,22 @@ const App = {
         const baby = document.getElementById('baby-bear');
         const stone = document.getElementById(`ice-${idx}`);
         const rect = stone.getBoundingClientRect();
-        baby.style.bottom = "240px";
-        setTimeout(() => { baby.style.left = (rect.left + rect.width/2 - 50) + "px"; baby.style.bottom = "165px"; }, 300);
+        
+        // 역동적인 점프 시작
+        baby.style.bottom = "280px";
+        baby.style.transform = "scaleY(1.1) rotate(5deg)";
+        
+        setTimeout(() => { 
+            // 곰의 너비 80px의 절반인 40px을 빼주어 빙하 정중앙에 착지하도록 계산
+            baby.style.left = (rect.left + rect.width/2 - 40) + "px"; 
+            baby.style.bottom = "165px"; 
+            // 착지 충격
+            baby.style.transform = "scaleY(0.85) rotate(0deg)"; 
+            
+            setTimeout(() => {
+                baby.style.transform = "scaleY(1) rotate(0deg)";
+            }, 150);
+        }, 250); 
     },
 
     renderQuiz() {
@@ -217,7 +230,6 @@ const App = {
     answer(point) {
         if(gameState.lock) return;
 
-        // 특정 번호 화면 흔들림 (2, 3, 6, 8, 9번째)
         const shakeIndices = [1, 2, 5, 7, 8]; 
         if (shakeIndices.includes(gameState.current)) {
             document.body.classList.add('shake-heavy');
@@ -254,7 +266,7 @@ const App = {
         if(gameState.current < 10) {
             setTimeout(() => { this.jumpBear(gameState.current); this.renderQuiz(); gameState.lock = false; }, 600);
         } else {
-            this.triggerFinal(); // 10번째 지진 및 추락
+            this.triggerFinal();
         }
     },
 
@@ -271,12 +283,16 @@ const App = {
             setTimeout(() => {
                 document.body.classList.remove('shake-heavy');
                 
-                // 모든 요소 추락 (퀴즈 보드 포함)
                 const quizBoard = document.querySelector('.quiz-container');
                 if(quizBoard) {
                     quizBoard.style.transform = "translateY(1500px)";
                     quizBoard.style.opacity = "0";
                 }
+                
+                // 추락 시 애니메이션 속도를 고정시켜 자연스럽게 떨어지도록 처리
+                document.getElementById('baby-bear').style.transition = "transform 2s, opacity 2s";
+                document.getElementById('mama-bear').style.transition = "transform 2s, opacity 2s";
+                
                 document.getElementById('baby-bear').style.transform = "translateY(1500px)";
                 document.getElementById('mama-bear').style.transform = "translateY(1500px)";
                 document.querySelectorAll('.ice-block').forEach(b => b.style.transform = "translateY(1500px)");
@@ -322,9 +338,8 @@ const App = {
         [m, b].forEach((bear, i) => {
             bear.style.position = 'relative'; bear.style.left = '0'; bear.style.bottom = '0';
             bear.classList.add(i===0?'dance-mama':'dance-baby');
-            bear.querySelectorAll('.limb-l, .limb-r').forEach(l => l.classList.add('wave-arm'));
-            bear.querySelectorAll('.tear').forEach(t => t.remove());
-            bear.querySelector('path')?.setAttribute('d', 'M 40 45 Q 50 55 60 45');
+            // 해피엔딩이므로 눈물 제거
+            bear.querySelectorAll('.css-tear').forEach(t => t.remove());
             container.appendChild(bear);
         });
         const quotes = ["나를 살려줘서 고마워!!", "옳은 선택을 해줘서 고마워!!", "고맙다 닝겐아!!", "함께 행복해요!!"];

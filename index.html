@@ -43,50 +43,66 @@
         /* =========================================
            [파트 1] 퀴즈 모드 스타일 (Three.js 북극곰)
            ========================================= */
-        #quiz-app {
-            position: relative;
-            width: 100%; height: 100%;
-        }
-
-        #canvas-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; pointer-events: none; 
-        }
-
-        #ui-container {
-            position: relative; width: 100%; height: 100%;
-            z-index: 10; pointer-events: none; 
-        }
+        #quiz-app { position: relative; width: 100%; height: 100%; }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        #ui-container { position: relative; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
         
-        .page { 
-            position: absolute; width: 100%; height: 100%; 
-            display: none; flex-direction: column; 
-            align-items: center; justify-content: center; 
-            box-sizing: border-box; padding: 20px;
-        }
+        .page { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px; }
         .active { display: flex; pointer-events: auto; }
 
         /* 로딩 화면 */
-        #loading-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: white;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 999; font-size: 1.5rem; font-weight: bold; pointer-events: auto;
-        }
+        #loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; font-size: 1.5rem; font-weight: bold; pointer-events: auto; }
         .spinner { margin-bottom: 20px; width: 50px; height: 50px; border: 5px solid #fff; border-top-color: var(--quiz-primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* 첫 페이지 */
         #page-start { background: linear-gradient(180deg, #ffffff 0%, #87CEEB 100%); }
-        .start-image { width: 100%; height: 55vh; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 30px; background-color: #ddd; }
+        .start-image { width: 100%; height: 50vh; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 15px; background-color: #ddd; }
+        
+        /* ⭐️ 1. 작게 만든 오디오 재생 버튼 */
+        .audio-btn {
+            margin-bottom: 20px;
+            padding: 8px 16px; /* 크기 축소 */
+            font-size: 0.85rem; /* 글자 크기 축소 */
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        .audio-btn:active { transform: scale(0.95); background: rgba(0, 0, 0, 0.8); }
+
         .start-btn { width: 90%; padding: 20px; font-size: 1.5rem; font-weight: 800; background: var(--quiz-primary); color: white; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4); }
 
-        /* 퀴즈 페이지 */
-        #page-quiz { justify-content: flex-start; padding-top: 5vh; }
-        #question-text { font-size: 1.8rem; font-weight: 900; line-height: 1.4; text-align: center; margin-bottom: 30px; word-break: keep-all; background: rgba(255,255,255,0.7); padding: 15px; border-radius: 15px; }
-        #question-text u { text-decoration: none; box-shadow: inset 0 -15px 0 rgba(255, 77, 77, 0.3); color: var(--quiz-primary); }
-        .options-container { width: 100%; display: flex; flex-direction: column; gap: 12px; max-height: 45vh; overflow-y: auto; }
-        .option-btn { width: 100%; padding: 18px; font-size: 1.1rem; font-weight: bold; background: var(--quiz-btn-bg); border: 2px solid transparent; border-radius: 15px; cursor: pointer; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        /* ⭐️ 2. 퀴즈 페이지 (공간 확보를 위해 줄임) */
+        #page-quiz { justify-content: flex-start; padding-top: 3vh; /* 조금 더 위로 붙임 */ }
+        
+        #question-text { 
+            font-size: 1.4rem; /* 질문 글자 크기 축소 */
+            font-weight: 900; line-height: 1.3; text-align: center; 
+            margin-bottom: 15px; /* 하단 여백 축소 */
+            word-break: keep-all; background: rgba(255,255,255,0.7); 
+            padding: 12px; border-radius: 15px; 
+        }
+        #question-text u { text-decoration: none; box-shadow: inset 0 -12px 0 rgba(255, 77, 77, 0.3); color: var(--quiz-primary); }
+        
+        .options-container { 
+            width: 100%; display: flex; flex-direction: column; 
+            gap: 8px; /* 선지 사이 간격 축소 */
+            max-height: 35vh; /* 선지가 차지하는 최대 높이 축소 */
+            overflow-y: auto; 
+        }
+        .option-btn { 
+            width: 100%; 
+            padding: 14px; /* 선지 안쪽 여백 축소 */
+            font-size: 1rem; /* 선지 글자 크기 축소 */
+            font-weight: bold; background: var(--quiz-btn-bg); 
+            border: 2px solid transparent; border-radius: 12px; 
+            cursor: pointer; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        }
 
         /* 결과 트리거 페이지 */
         #page-interim { justify-content: flex-start; padding-top: 15vh; }
@@ -106,18 +122,14 @@
         .bear-count-wrap { font-size: 2rem; font-weight: bold; }
         #bear-number { font-size: 4.5rem; color: var(--quiz-primary); display: inline-block; transition: transform 0.3s; }
         
-        /* ⭐️ 전환 버튼 스타일 */
+        /* 전환 버튼 스타일 */
         .go-donation-btn { margin-top: 30px; padding: 15px 40px; border-radius: 30px; border: none; font-weight: bold; font-size: 1.2rem; background: var(--iob-primary); color: white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,142,204,0.4); animation: pulseBtn 1.5s infinite; }
         @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* =========================================
            [파트 2] 기부 증명 시스템 모드 스타일
            ========================================= */
-        #donation-app {
-            display: none; /* 처음엔 숨김 */
-            width: 100%; min-height: 100vh;
-        }
-
+        #donation-app { display: none; width: 100%; min-height: 100vh; }
         header { background-color: #ffffff; border-bottom: 1px solid var(--iob-border); padding: 15px 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
         header h1 { margin: 0; font-size: 18px; color: var(--iob-navy); font-weight: 700; }
         .company-tag { font-size: 12px; color: var(--iob-primary); background: #e8f5ff; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
@@ -134,11 +146,9 @@
         .status-pending { background-color: #fff3cd; color: var(--iob-warning); }
         .cert-link { color: var(--iob-primary); text-decoration: underline; cursor: pointer; font-weight: bold; }
         
-        /* 플로팅 버튼 */
         .btn-add { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; background-color: var(--iob-primary); color: white; border-radius: 50%; text-align: center; line-height: 56px; font-size: 32px; cursor: pointer; border: none; box-shadow: 0 6px 20px rgba(0,142,204,0.5); z-index: 100; transition: all 0.2s ease; }
         .btn-add:active { transform: translateX(-50%) scale(0.95); background-color: #0077b3; }
 
-        /* 모달 공통 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(28, 45, 66, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
         .modal-content { background: white; padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
         .modal-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--iob-navy); border-bottom: 2px solid var(--iob-primary); padding-bottom: 10px; }
@@ -188,7 +198,11 @@
 
         <div id="ui-container">
             <div id="page-start" class="page active">
-                <img src="start_image.png" alt="북극곰" class="start-image" onerror="this.src='https://via.placeholder.com/600x800?text=Image'">
+                <img src="첫페이지.jpg" alt="북극곰" class="start-image" onerror="this.src='https://via.placeholder.com/600x800?text=Image'">
+                
+                <audio id="bear-scream" src="크게9.mp3"></audio>
+                <button class="audio-btn" onclick="playScream()">🔊 북극곰 비명소리 듣기</button>
+
                 <button class="start-btn" onclick="startQuiz()">북극곰 구하러 가기</button>
             </div>
 
@@ -316,22 +330,19 @@
 
 
     <script>
-        // ⭐️ 화면 전환 함수 ⭐️
+        function playScream() {
+            const audio = document.getElementById('bear-scream');
+            audio.currentTime = 0; 
+            audio.play();
+        }
+
         window.goToDonation = function() {
-            // 1. 바디 클래스를 바꿔서 배경색과 스크롤 가능 여부 변경
             document.body.className = 'donation-mode';
-            
-            // 2. 퀴즈와 3D 곰 화면 숨기기
             document.getElementById('quiz-app').style.display = 'none';
-            
-            // 3. 기부 시스템 화면 나타내기
             document.getElementById('donation-app').style.display = 'block';
-            
-            // 맨 위로 스크롤
             window.scrollTo(0,0);
         }
 
-        // 퀴즈 문제 및 로직
         const questions = [
             { q: "일주일에 <u>배달 음식</u>을 얼마나 자주 시켜 먹나요?", options: [ { text: "주 4회 이상 (VVIP)", score: 20 }, { text: "주 2~3회 정도", score: 15 }, { text: "월 1~2회 아주 가끔", score: 5 }, { text: "거의 안 먹음 (직접 해먹음)", score: 0 } ] },
             { q: "카페에서 음료를 마실 때, <u>텀블러</u>를 챙기시나요?", options: [ { text: "귀찮아서 매일 일회용 컵", score: 20 }, { text: "일주일에 절반은 일회용 컵", score: 15 }, { text: "가끔 생각나면 텀블러 지참", score: 5 }, { text: "무조건 개인 텀블러 사용", score: 0 } ] },
@@ -352,6 +363,10 @@
             document.getElementById('page-start').style.background = 'transparent';
             if(window.danceClips && window.danceClips.length > 0) window.fadeToAction(window.danceClips[0], 0);
             window.danceInterval = setInterval(window.playNextDance, 10000);
+
+            const audio = document.getElementById('bear-scream');
+            audio.pause();
+            audio.currentTime = 0;
 
             currentQ = 0; totalScore = 0;
             renderQ();
@@ -453,11 +468,15 @@
         loader.load('자동재생.fbx', function (object) {
             const box = new THREE.Box3().setFromObject(object);
             const size = box.getSize(new THREE.Vector3());
-            const scale = 5.5 / Math.max(size.x, size.y, size.z);
+            
+            // ⭐️ 3. 크기를 살짝 줄여서 화면 밖으로 나가지 않게 함 (5.5 -> 4.8)
+            const scale = 4.8 / Math.max(size.x, size.y, size.z);
             object.scale.set(scale, scale, scale);
             const newBox = new THREE.Box3().setFromObject(object);
             const center = newBox.getCenter(new THREE.Vector3());
-            object.position.set(-center.x, -3.8, -center.z); 
+            
+            // ⭐️ 3. Y축 위치를 끌어올려 곰 발이 보이도록 함 (-3.8 -> -2.8)
+            object.position.set(-center.x, -2.8, -center.z); 
 
             scene.add(object);
             window.mixer = new THREE.AnimationMixer(object);

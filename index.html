@@ -2,354 +2,732 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>나는 무죄인가? - 북극곰의 마지막 외침</title>
-    <style>
-        :root { --red: #ff4d4d; --ice: #e0f7fa; --deep: #01579b; --gold: #ffd700; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Apple SD Gothic Neo', sans-serif; color: #fff; }
-        
-        /* 눈 내리는 배경 (모든 페이지 공통) */
-        #snow-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-        
-        .page { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2; }
-        .active { display: flex; }
-
-        /* 배경음악 ON/OFF 버튼 */
-        #music-ctrl {
-            position: fixed; right: 20px; bottom: 20px; z-index: 1000;
-            padding: 12px 25px; border-radius: 30px; background: rgba(255, 255, 255, 0.8);
-            color: #333; font-weight: bold; cursor: pointer; border: 2px solid var(--deep);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s;
-        }
-
-        #page-start { background: url('마른 사진.png') no-repeat center center/contain; background-color: #000; align-items: flex-end; padding-right: 8%; }
-        .start-title { font-size: 85px; font-weight: 900; color: var(--red); text-shadow: 5px 5px 25px #000; margin-bottom: 30px; }
-
-        .btn-main { padding: 25px 80px; font-size: 28px; border-radius: 60px; border: none; background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%); color: var(--deep); font-weight: bold; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: 0.3s; }
-
-        #page-quiz { background: linear-gradient(to bottom, #a2e4f6, #ffffff); color: #333; }
-        .quiz-container { width: 85%; max-width: 850px; background: rgba(255,255,255,0.95); padding: 40px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); z-index: 10; margin-top: -80px; transition: transform 2s ease-in, opacity 2s; }
-        .env-impact { background: #f0faff; padding: 20px; border-radius: 20px; margin: 20px 0; font-size: 16px; line-height: 1.7; border-left: 8px solid var(--deep); }
-        .impact-highlight { font-weight: bold; text-decoration: underline; color: #d32f2f; }
-        .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .opt-btn { padding: 20px; border: 2px solid #ddd; border-radius: 20px; background: #fff; cursor: pointer; font-size: 18px; font-weight: bold; }
-
-        .stepping-stones { position: absolute; bottom: 120px; width: 100%; display: flex; justify-content: space-around; padding: 0 40px; box-sizing: border-box; }
-        .ice-block { width: 90px; height: 45px; background: #fff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: 1s; position: relative; }
-        .fragment { position: absolute; width: 30px; height: 20px; background: #fff; border-radius: 5px; opacity: 1; transition: 1.2s ease-out; pointer-events: none; }
-        
-        /* 곰 기본 설정 (점프 가속도 반영) */
-        .bear { position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; transition: left 0.6s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.3s cubic-bezier(0.42, 0, 0.58, 1), transform 0.25s ease-out, opacity 2s; }
-        
-        /* 곰 이미지와 눈물을 하나로 묶는 래퍼 */
-        .img-wrapper { position: relative; display: inline-block; }
-        
-        /* 곰 숨쉬기 애니메이션 */
-        .img-wrapper img { width: 100%; height: auto; display: block; transform-origin: bottom center; animation: breathe 3s ease-in-out infinite alternate; }
-        @keyframes breathe { 0% { transform: scaleY(1); } 100% { transform: scaleY(1.03) scaleX(0.98); } }
-
-        /* 눈물 CSS (곰 이미지 래퍼 안에서 절대좌표를 가짐) */
-        .css-tear { position: absolute; background-color: #4fc3f7; border-radius: 50%; z-index: 30; animation: cry 1.5s infinite; pointer-events: none; }
-        @keyframes cry { 0% { transform: translateY(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
-
-        /* 파괴율 및 대사 팝업 */
-        #destruction-popup { position: absolute; bottom: 330px; text-align: center; z-index: 100; transition: opacity 1.5s ease-out; opacity: 0; pointer-events: none; }
-        .rate-text { font-size: 38px; font-weight: 900; color: var(--red); text-shadow: 2px 2px 4px #fff; }
-        .shout-text { font-size: 26px; font-weight: bold; color: #333; text-shadow: 1px 1px 3px #fff; margin-top: 5px; }
-
-        .shake-heavy { animation: shake-h 0.1s infinite; }
-        @keyframes shake-h { 0% { transform: translate(5px, 5px); } 50% { transform: translate(-5px, -5px); } 100% { transform: translate(5px, -5px); } }
-        
-        .halo { position: absolute; top: -25px; width: 50px; height: 12px; border: 4px solid var(--gold); border-radius: 50%; box-shadow: 0 0 15px var(--gold); }
-        .soul { transition: bottom 8s linear, left 8s ease-in-out, opacity 2s; filter: brightness(1.8) opacity(0.6); }
-
-        .result-scroll-area { width: 95%; max-height: 75vh; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
-        .res-card { margin-bottom: 40px; padding: 35px; border-radius: 30px; background: #2a2a2a; line-height: 1.8; color: #eee; border: 1px solid #444; }
-        .active-res { border: 6px solid var(--red) !important; position: relative; background: #3d1a1a; }
-        .active-res::before { content: '나의 범죄'; position: absolute; top: -25px; left: 30px; background: var(--red); color: white; padding: 8px 25px; font-weight: bold; border-radius: 10px; }
-
-        .dance-mama { animation: jump-mama 0.5s infinite alternate; }
-        .dance-baby { animation: jump-baby 0.5s infinite alternate-reverse; }
-        @keyframes jump-mama { from { transform: translateY(0); } to { transform: translateY(-60px); } }
-        @keyframes jump-baby { from { transform: translateY(0); } to { transform: translateY(-80px); } }
-        .bubble { position: absolute; top: -110px; background: white; border-radius: 25px; padding: 15px 30px; color: #000; font-weight: bold; font-size: 22px; white-space: nowrap; z-index: 100; }
-    </style>
-</head>
-<body>
-
-<audio id="bgm" loop><source src="배경음악.mp3" type="audio/mpeg"></audio>
-<audio id="happy-bgm" loop><source src="긍정 노래.mp3" type="audio/mpeg"></audio>
-<canvas id="snow-canvas"></canvas>
-<button id="music-ctrl" onclick="App.toggleMusic()">배경음악 ON</button>
-
-<div id="page-start" class="page active">
-    <div class="start-title">나는 무죄인가?</div>
-    <button class="btn-main" onclick="App.start()">북극곰 만나러 가기</button>
-</div>
-
-<div id="page-quiz" class="page">
-    <div id="destruction-popup">
-        <div class="rate-text" id="pop-rate"></div>
-        <div class="shout-text" id="pop-shout"></div>
-    </div>
-    <div id="msg-popup" style="position: absolute; bottom: 320px; font-size: 32px; font-weight: bold; color: var(--red); opacity: 0; z-index: 100; text-shadow: 2px 2px 4px #fff; text-align: center;"></div>
-    <div class="quiz-container" id="quiz-ui"></div>
-    <div class="stepping-stones" id="stones-container"></div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>북극곰 구출 캠페인</title>
     
-    <div id="baby-bear" class="bear" style="bottom: 165px; left: 5%;">
-        <div class="img-wrapper" style="width: 80px;">
-            <img src="bear.png" alt="새끼 북극곰">
-            <div class="css-tear" style="width: 5px; height: 5px; top: 22%; left: 74%;"></div>
-        </div>
-    </div>
+    <style>
+        :root {
+            /* --- 퀴즈(파트 1) 전용 색상 변수 --- */
+            --quiz-primary: #ff4d4d;
+            --quiz-btn-bg: rgba(255, 255, 255, 0.9);
 
-    <div id="mama-bear" class="bear" style="bottom: 120px; right: 5%;">
-        <div class="img-wrapper" style="width: 140px; transform: scaleX(-1);">
-            <img src="bear.png" alt="어미 북극곰">
-            <div class="css-tear" style="width: 7px; height: 7px; top: 22%; left: 74%;"></div>
-        </div>
-    </div>
-</div>
-
-<div id="page-ending" class="page" style="background: #000; text-align: center;">
-    <h1 style="color:var(--red); font-size: 45px; line-height: 1.6;">당신의 사소한 행동이<br>북극곰 가족을 사지로 몰아넣었습니다.</h1>
-    <p style="color:white; font-size: 24px;">결국 북극곰 가족은 만나지 못하고 죽게 됐습니다.</p>
-    <button class="btn-main" onclick="App.showResults()" style="margin-top: 50px;">당신은 어떤 이웃인가요?</button>
-</div>
-
-<div id="page-results" class="page" style="background: #111;">
-    <div class="result-scroll-area" id="results-content"></div>
-    <button class="btn-main" style="margin-top: 20px;" onclick="App.navigateTo('page-ask')">북극곰 살리러 가기</button>
-</div>
-
-<div id="page-ask" class="page" style="background: #000; text-align: center;">
-    <h1 style="font-size: 55px; margin-bottom: 60px;">북극곰을 살리고 싶습니까?</h1>
-    <div style="display: flex; gap: 40px;">
-        <button class="btn-main" onclick="App.showDance()">예</button>
-        <button class="btn-main" onclick="alert('결국 외면하시는군요...')">아니오</button>
-    </div>
-</div>
-
-<div id="page-dance" class="page" style="background: linear-gradient(to bottom, #e1f5fe, #ffffff); color: #01579b;">
-    <h1 style="font-size: 45px; text-align: center; position: absolute; top: 10%;">북극곰을 살리기 위해<br>가디언즈(직원들)를 불러주세요!</h1>
-    <div id="dance-container" style="display: flex; gap: 80px; align-items: flex-end; margin-top: 100px;"></div>
-    <button class="btn-main" style="position: absolute; bottom: 40px; right: 40px;" onclick="location.reload()">처음으로 돌아가기</button>
-</div>
-
-<script>
-const QUESTIONS = [
-    { q: "1. 읽지 않는 스팸 메일이나 오래된 메일을 쌓아둔다.", i: "이메일 1MB 저장 시 <span class='impact-highlight'>약 7g의 CO2가 배출</span>됩니다. 10통씩만 지워도 <span class='impact-highlight'>화력 발전소 수십 대</span>를 끄는 효과가 있으며, 이는 매년 <span class='impact-highlight'>수십만 톤의 빙하</span>를 지킵니다.", o: ["즉시 삭제", "가끔 삭제", "거의 안 지움", "수만 건 방치"], f: "서서히 갈라짐1" },
-    { q: "2. 스마트폰 충전기를 사용하지 않을 때도 꽂아둔다.", i: "불필요한 대기 전력은 연간 <span class='impact-highlight'>약 30kg의 탄소를 배출</span>합니다. 이는 북극 해빙을 해마다 <span class='impact-highlight'>축구장 수천 개 넓이</span>만큼 녹여 <span class='impact-highlight'>새끼 북극곰이 쉴 곳</span>을 뺏습니다.", o: ["무조건 뽑음", "가끔 뽑음", "거의 안 뽑음", "항상 연결"], f: "서서히 갈라짐2" },
-    { q: "3. 종이 영수증을 습관적으로 출력해서 받는다.", i: "영수증 1장당 <span class='impact-highlight'>약 15g의 탄소 발생</span>. 우리나라에서만 <span class='impact-highlight'>33만 그루의 나무</span>가 베어지며, 이는 북극곰을 <span class='impact-highlight'>굶주림으로 내모는 것</span>과 같습니다.", o: ["모바일 영수증", "가끔 받음", "습관적으로 받음", "무조건 받음"], f: "작게3" },
-    { q: "4. 설거지를 할 때 물을 계속 틀어놓고 비누칠을 한다.", i: "15분간 물 틀면 <span class='impact-highlight'>약 180L의 물이 낭비</span>됩니다. 발생하는 온실가스는 <span class='impact-highlight'>해수면을 높여</span> 북극곰의 서식지를 <span class='impact-highlight'>직접적으로 수몰</span>시킵니다.", o: ["물을 받아서 함", "필요할 때만 켬", "자주 틀어둠", "계속 틀어둠"], f: "서서히 갈라짐4" },
-    { q: "5. 유통기한이 지난 약을 일반 쓰레기통이나 하수구에 버린다.", i: "약 성분은 독성 물질이 되어 <span class='impact-highlight'>북극곰의 체내에 축적</span>됩니다. 이는 <span class='impact-highlight'>번식력을 떨어뜨리고 멸종을 가속화</span>하는 치명적 원인이 됩니다.", o: ["수거함 제출", "가끔 이용", "일반 쓰레기", "하수구 투기"], f: "좀 크게 갈라짐5" },
-    { q: "6. 택배 박스의 테이프와 송장을 제거하지 않고 배출한다.", i: "유독가스와 탄소는 <span class='impact-highlight'>지구 온난화의 주범</span>이며, 빙하 해빙 속도를 <span class='impact-highlight'>자연보다 100배 이상 빠르게</span> 만들어 북극곰을 고립시킵니다.", o: ["완벽히 제거", "대충 제거", "가끔 제거", "전혀 안 함"], f: "작게6" },
-    { q: "7. 음식을 먹을 때 종이 타월을 여러 장 쓴다.", i: "타월 1톤에 <span class='impact-highlight'>나무 17그루와 100톤의 물</span> 소모. 타월 한 장이 북극 온도를 높여 <span class='impact-highlight'>사냥 시간을 매년 3~5일씩</span> 앗아갑니다.", o: ["손수건", "1장", "2~3장", "뭉텅이"], f: "좀 크게7" },
-    { q: "8. 배달 음식을 시킬 때 일회용 수저와 포크를 무심코 받는다.", i: "플라스틱 분해 <span class='impact-highlight'>500년 소요</span>. 생산 온실가스는 결국 빙하를 녹여 <span class='impact-highlight'>북극곰 가족이 얼음 조각에 매달려 표류</span>하게 만듭니다.", o: ["항상 안 받음", "가끔 체크", "거의 안 함", "무조건 받음"], f: "좀 크게8" },
-    { q: "9. 세탁 시 섬유유연제를 향기를 위해 정량보다 많이 넣는다.", i: "미세 플라스틱은 <span class='impact-highlight'>북극해까지 도달</span>합니다. 이를 먹고 병든 물고기 때문에 북극곰은 <span class='impact-highlight'>면역력이 약해져 추위와 굶주림</span>을 견디지 못합니다.", o: ["정량 미만", "정량 준수", "조금 더", "듬뿍 넣음"], f: "크게9" },
-    { q: "10. 도보 15분 이내의 짧은 거리도 습관적으로 차를 탄다.", i: "주행 1km당 <span class='impact-highlight'>약 140g의 탄소 배출</span>. 짧은 이동이 빙하를 녹여 북극곰이 <span class='impact-highlight'>민가 쓰레기통을 뒤지게</span> 만듭니다.", o: ["무조건 도보", "컨디션 따라", "자주 이용", "무조건 이용"], f: "크게10" }
-];
-
-const gameState = { current: 0, score: 0, lock: false, musicOn: true };
-const bearQuotes = ["배고파...", "고통스러워....", "그만해....", "엄마 보고 싶어....", "집이 녹고 있어...", "살려주세요..."];
-
-const App = {
-    toggleMusic() {
-        const bgm = document.getElementById('bgm');
-        const btn = document.getElementById('music-ctrl');
-        if (gameState.musicOn) { bgm.pause(); btn.innerText = "배경음악 OFF"; } 
-        else { bgm.play(); btn.innerText = "배경음악 ON"; }
-        gameState.musicOn = !gameState.musicOn;
-    },
-
-    start() {
-        this.navigateTo('page-quiz');
-        this.initSnow();
-        this.initStones();
-        this.renderQuiz();
-        document.getElementById('bgm').play().catch(()=>{});
-    },
-
-    navigateTo(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    },
-
-    initSnow() {
-        const canvas = document.getElementById('snow-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const flakes = Array.from({length: 150}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*3+1, d: Math.random()*1 }));
-        function loop() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = "white"; ctx.beginPath();
-            flakes.forEach(f => { ctx.moveTo(f.x, f.y); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); });
-            ctx.fill();
-            flakes.forEach(f => { f.y += 2 + f.r/2; f.x += Math.sin(f.d); if(f.y > canvas.height) f.y = -10; });
-            requestAnimationFrame(loop);
+            /* --- 기부 시스템(파트 2) 전용 색상 변수 --- */
+            --iob-primary: #008ecc;
+            --iob-navy: #1c2d42;
+            --iob-light-bg: #f8f9fa;
+            --iob-border: #e9ecef;
+            --iob-success: #28a745;
+            --iob-warning: #f39c12;
         }
-        loop();
-    },
 
-    initStones() {
-        const container = document.getElementById('stones-container');
-        for(let i=0; i<10; i++) {
-            let b = document.createElement('div'); b.className = 'ice-block'; b.id = `ice-${i}`;
-            container.appendChild(b);
+        /* 공통 바디 설정 */
+        body, html { 
+            margin: 0; padding: 0; 
+            width: 100%; height: 100%; 
+            font-family: 'Apple SD Gothic Neo', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; 
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
         }
-        this.jumpBear(0);
-    },
 
-    jumpBear(idx) {
-        const baby = document.getElementById('baby-bear');
-        const stone = document.getElementById(`ice-${idx}`);
-        const rect = stone.getBoundingClientRect();
+        /* 상태에 따른 화면 모드 설정 */
+        body.quiz-mode {
+            overflow: hidden; /* 퀴즈는 스크롤 금지 */
+            background: linear-gradient(180deg, #ffffff 0%, #87CEEB 100%);
+        }
+
+        body.donation-mode {
+            overflow: auto; /* 기부 내역은 스크롤 허용 */
+            background-color: var(--iob-light-bg);
+        }
+
+        /* =========================================
+           [파트 1] 퀴즈 모드 스타일 (Three.js 북극곰)
+           ========================================= */
+        #quiz-app {
+            position: relative;
+            width: 100%; height: 100%;
+        }
+
+        #canvas-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none; 
+        }
+
+        #ui-container {
+            position: relative; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none; 
+        }
         
-        // 역동적인 점프 시작
-        baby.style.bottom = "280px";
-        baby.style.transform = "scaleY(1.1) rotate(5deg)";
+        .page { 
+            position: absolute; width: 100%; height: 100%; 
+            display: none; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            box-sizing: border-box; padding: 20px;
+        }
+        .active { display: flex; pointer-events: auto; }
+
+        /* 로딩 화면 */
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: white;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 999; font-size: 1.5rem; font-weight: bold; pointer-events: auto;
+        }
+        .spinner { margin-bottom: 20px; width: 50px; height: 50px; border: 5px solid #fff; border-top-color: var(--quiz-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 첫 페이지 */
+        #page-start { background: linear-gradient(180deg, #ffffff 0%, #87CEEB 100%); }
+        .start-image { width: 100%; height: 55vh; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 30px; background-color: #ddd; }
+        .start-btn { width: 90%; padding: 20px; font-size: 1.5rem; font-weight: 800; background: var(--quiz-primary); color: white; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4); }
+
+        /* 퀴즈 페이지 */
+        #page-quiz { justify-content: flex-start; padding-top: 5vh; }
+        #question-text { font-size: 1.8rem; font-weight: 900; line-height: 1.4; text-align: center; margin-bottom: 30px; word-break: keep-all; background: rgba(255,255,255,0.7); padding: 15px; border-radius: 15px; }
+        #question-text u { text-decoration: none; box-shadow: inset 0 -15px 0 rgba(255, 77, 77, 0.3); color: var(--quiz-primary); }
+        .options-container { width: 100%; display: flex; flex-direction: column; gap: 12px; max-height: 45vh; overflow-y: auto; }
+        .option-btn { width: 100%; padding: 18px; font-size: 1.1rem; font-weight: bold; background: var(--quiz-btn-bg); border: 2px solid transparent; border-radius: 15px; cursor: pointer; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        /* 결과 트리거 페이지 */
+        #page-interim { justify-content: flex-start; padding-top: 15vh; }
+        .fatal-btn { font-size: 2.2rem; font-weight: 900; padding: 35px 20px; width: 90%; text-align: center; word-break: keep-all; background: #660000; color: #ffcccc; border: 3px solid #ff0000; border-radius: 20px; cursor: pointer; box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), inset 0 0 20px rgba(255, 0, 0, 0.5); text-shadow: 0 0 10px rgba(255, 0, 0, 1); animation: fatalPulse 0.8s infinite alternate; }
+        @keyframes fatalPulse { 0% { transform: scale(1); box-shadow: 0 0 20px rgba(255,0,0,0.5); } 100% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255,0,0,1); } }
+
+        /* 최종 결과 페이지 */
+        #page-result { justify-content: flex-start; padding-top: 10vh; }
+        .result-container { display: flex; width: 100%; height: 40vh; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.8); padding: 20px; border-radius: 20px; box-sizing: border-box;}
+        .gauge-section { width: 30%; height: 100%; display: flex; justify-content: center; align-items: flex-end; position: relative; }
+        .gauge-bar { width: 40px; height: 100%; background: rgba(200,200,200,0.5); border-radius: 20px; position: relative; overflow: hidden; border: 2px solid #fff; }
+        .gauge-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: var(--quiz-primary); transition: height 2.5s cubic-bezier(0.1, 0.8, 0.2, 1); }
+        .gauge-pointer { position: absolute; left: 60px; bottom: 0%; background: #000; color: #fff; padding: 8px 12px; border-radius: 10px; font-weight: bold; font-size: 1rem; white-space: nowrap; transition: bottom 2.5s cubic-bezier(0.1, 0.8, 0.2, 1); opacity: 0; }
+        .gauge-pointer::before { content: '◀'; position: absolute; left: -12px; color: #000; }
+        .stats-section { width: 65%; display: flex; flex-direction: column; justify-content: center; text-align: right; }
+        .stats-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; word-break: keep-all; }
+        .bear-count-wrap { font-size: 2rem; font-weight: bold; }
+        #bear-number { font-size: 4.5rem; color: var(--quiz-primary); display: inline-block; transition: transform 0.3s; }
         
-        setTimeout(() => { 
-            // 곰의 너비 80px의 절반인 40px을 빼주어 빙하 정중앙에 착지하도록 계산
-            baby.style.left = (rect.left + rect.width/2 - 40) + "px"; 
-            baby.style.bottom = "165px"; 
-            // 착지 충격
-            baby.style.transform = "scaleY(0.85) rotate(0deg)"; 
-            
-            setTimeout(() => {
-                baby.style.transform = "scaleY(1) rotate(0deg)";
-            }, 150);
-        }, 250); 
-    },
+        /* ⭐️ 전환 버튼 스타일 */
+        .go-donation-btn { margin-top: 30px; padding: 15px 40px; border-radius: 30px; border: none; font-weight: bold; font-size: 1.2rem; background: var(--iob-primary); color: white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,142,204,0.4); animation: pulseBtn 1.5s infinite; }
+        @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-    renderQuiz() {
-        const q = QUESTIONS[gameState.current];
-        const ui = document.getElementById('quiz-ui');
-        ui.innerHTML = `<p style="font-size:22px; font-weight:900; color:var(--deep)">질문: ${q.q.split('. ')[1]}</p><div class="env-impact"><b>환경 영향:</b> ${q.i}</div><div class="opt-grid">${q.o.map((opt, i) => `<button class="opt-btn" onclick="App.answer(${i+1})">${opt}</button>`).join('')}</div>`;
-    },
-
-    answer(point) {
-        if(gameState.lock) return;
-
-        const shakeIndices = [1, 2, 5, 7, 8]; 
-        if (shakeIndices.includes(gameState.current)) {
-            document.body.classList.add('shake-heavy');
-            setTimeout(() => document.body.classList.remove('shake-heavy'), 500);
+        /* =========================================
+           [파트 2] 기부 증명 시스템 모드 스타일
+           ========================================= */
+        #donation-app {
+            display: none; /* 처음엔 숨김 */
+            width: 100%; min-height: 100vh;
         }
 
-        gameState.lock = true;
-        gameState.score += point;
-        const qData = QUESTIONS[gameState.current];
-        new Audio(`${qData.f}.mp3`).play();
+        header { background-color: #ffffff; border-bottom: 1px solid var(--iob-border); padding: 15px 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+        header h1 { margin: 0; font-size: 18px; color: var(--iob-navy); font-weight: 700; }
+        .company-tag { font-size: 12px; color: var(--iob-primary); background: #e8f5ff; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+        .container { max-width: 100%; margin: 20px auto; padding: 0 15px; }
+        .section-title { font-size: 16px; color: var(--iob-navy); margin-bottom: 15px; font-weight: 600; }
+        .table-container { background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 30px; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid var(--iob-border); font-size: 13px; }
+        th { background-color: #fafafa; color: var(--iob-navy); font-weight: 600; }
+        tr.clickable-row { cursor: pointer; transition: background 0.2s; }
+        tr.clickable-row:active { background-color: #f1f3f5; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .status-complete { background-color: #e8f5e9; color: var(--iob-success); }
+        .status-pending { background-color: #fff3cd; color: var(--iob-warning); }
+        .cert-link { color: var(--iob-primary); text-decoration: underline; cursor: pointer; font-weight: bold; }
+        
+        /* 플로팅 버튼 */
+        .btn-add { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; background-color: var(--iob-primary); color: white; border-radius: 50%; text-align: center; line-height: 56px; font-size: 32px; cursor: pointer; border: none; box-shadow: 0 6px 20px rgba(0,142,204,0.5); z-index: 100; transition: all 0.2s ease; }
+        .btn-add:active { transform: translateX(-50%) scale(0.95); background-color: #0077b3; }
 
-        const pop = document.getElementById('destruction-popup');
-        document.getElementById('pop-rate').innerText = `빙하 파괴율: ${gameState.score * 4}%`;
-        document.getElementById('pop-shout').innerText = bearQuotes[Math.floor(Math.random() * bearQuotes.length)];
-        pop.style.left = document.getElementById('baby-bear').style.left;
-        pop.style.opacity = 1;
+        /* 모달 공통 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(28, 45, 66, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+        .modal-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--iob-navy); border-bottom: 2px solid var(--iob-primary); padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 8px; font-weight: 600; }
+        .form-group select { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .phone-group { display: flex; align-items: center; gap: 10px; }
+        .phone-group input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; text-align: center; width: 100%; }
+        .phone-group span { font-weight: bold; color: #666; }
+        
+        .signature-container { border: 1px dashed #b1bbc4; background: #fafafa; border-radius: 6px; position: relative; margin-top: 8px; height: 160px; touch-action: none; }
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        .btn-clear { position: absolute; right: 12px; bottom: 12px; background: #6c757d; color: white; border: none; padding: 5px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+        
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; flex: 1; }
+        .btn-submit { background-color: var(--iob-primary); color: white; }
+        .btn-cancel { background-color: #e9ecef; color: #495057; }
+        
+        .receipt-img { width: 100%; border-radius: 8px; }
+        .detail-info { text-align: center; margin: 15px 0; font-size: 16px; font-weight: bold; }
+        .detail-sig { width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
+        
+        footer { text-align: center; padding: 30px 15px; margin-bottom: 80px; }
+        footer p { font-size: 12px; color: #7f8c8d; }
+    </style>
 
-        const ice = document.getElementById(`ice-${gameState.current}`);
-        if(Math.random() > 0.5) ice.style.transform = "translateY(1200px) rotate(45deg)";
-        else {
-            for(let i=0; i<6; i++) {
-                let frag = document.createElement('div'); frag.className = 'fragment';
-                frag.style.left = ice.offsetLeft + 'px'; frag.style.top = ice.offsetTop + 'px';
-                document.getElementById('page-quiz').appendChild(frag);
-                setTimeout(() => { frag.style.transform = `translate(${(Math.random()-0.5)*1600}px, ${-Math.random()*1100}px) rotate(360deg)`; frag.style.opacity = '0'; }, 10);
-                setTimeout(() => frag.remove(), 1200);
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
             }
-            ice.style.opacity = "0";
         }
+    </script>
+</head>
 
-        setTimeout(() => { pop.style.opacity = 0; }, 1500);
+<body class="quiz-mode">
 
-        gameState.current++;
-        if(gameState.current < 10) {
-            setTimeout(() => { this.jumpBear(gameState.current); this.renderQuiz(); gameState.lock = false; }, 600);
-        } else {
-            this.triggerFinal();
-        }
-    },
+    <div id="quiz-app">
+        <div id="canvas-container"></div>
 
-    triggerFinal() {
-        const popMsg = document.getElementById('msg-popup');
-        popMsg.innerText = "엄마 만났다!"; popMsg.style.opacity = 1;
-        
-        setTimeout(() => {
-            popMsg.innerText = "어.......???";
-            document.body.classList.add('shake-heavy');
+        <div id="loading-screen">
+            <div class="spinner"></div>
+            <div id="loading-text">북극곰 깨우는 중... (0/7)</div>
+        </div>
+
+        <div id="ui-container">
+            <div id="page-start" class="page active">
+                <img src="start_image.png" alt="북극곰" class="start-image" onerror="this.src='https://via.placeholder.com/600x800?text=Image'">
+                <button class="start-btn" onclick="startQuiz()">북극곰 구하러 가기</button>
+            </div>
+
+            <div id="page-quiz" class="page">
+                <div id="question-text">질문 텍스트</div>
+                <div class="options-container" id="options-container"></div>
+            </div>
+
+            <div id="page-interim" class="page">
+                <button class="fatal-btn" onclick="showResult()">내가 죽인 북극곰 수는?</button>
+            </div>
+
+            <div id="page-result" class="page">
+                <div class="result-container">
+                    <div class="gauge-section">
+                        <div class="gauge-bar"><div class="gauge-fill" id="gauge-fill"></div></div>
+                        <div class="gauge-pointer" id="gauge-pointer">상위 ?%</div>
+                    </div>
+                    <div class="stats-section">
+                        <div class="stats-title">한 달 동안<br>내가 죽인 북극곰</div>
+                        <div class="bear-count-wrap"><span id="bear-number">0</span> 마리</div>
+                    </div>
+                </div>
+                <button class="go-donation-btn" onclick="goToDonation()">북극곰 살리러 가기</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="donation-app">
+        <header>
+            <h1>아이스버그 프로텍트</h1>
+            <div class="company-tag">공식 대리 기부 주관: 아이오비(IOB)</div>
+        </header>
+
+        <div class="container">
+            <div class="section-title">실시간 기부 현황</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>기부자(번호)</th>
+                            <th>기부 캠페인명</th>
+                            <th>기부 금액</th>
+                            <th>기부 단체</th>
+                            <th>인증번호</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donation-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <button class="btn-add" id="open-modal-btn">+</button>
+
+        <div class="modal" id="signature-modal">
+            <div class="modal-content">
+                <div class="modal-header">기부 서명 등록 (모바일 전용)</div>
+                <div class="form-group">
+                    <label>기부 캠페인명</label>
+                    <select id="donation-campaign">
+                        <option value="북극곰 서식지 복원 캠페인">북극곰 서식지 복원 캠페인</option>
+                        <option value="빙하 보존 및 기후변화 대응">빙하 보존 및 기후변화 대응</option>
+                        <option value="북극곰 먹이 공급망 보호">북극곰 먹이 공급망 보호</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>기부 단체</label>
+                    <select id="donation-target">
+                        <option value="유니세프(UNICEF)">유니세프(UNICEF)</option>
+                        <option value="그린피스">그린피스</option>
+                        <option value="WWF">WWF</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>휴대폰 번호</label>
+                    <div class="phone-group">
+                        <input type="text" id="phone-first" value="010" readonly>
+                        <span>-</span>
+                        <input type="tel" id="phone-middle" maxlength="4" placeholder="0000">
+                        <span>-</span>
+                        <input type="tel" id="phone-last" maxlength="4" placeholder="0000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>서명 (화면 터치로 서명하세요)</label>
+                    <div class="signature-container">
+                        <canvas id="sig-canvas"></canvas>
+                        <button type="button" class="btn-clear" id="sig-clear-btn">지우기</button>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" id="close-modal-btn">닫기</button>
+                    <button class="btn btn-submit" id="submit-btn">저장</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="receipt-modal">
+            <div class="modal-content">
+                <div class="modal-header">기부 영수증</div>
+                <img src="./기부 영수증.png" alt="기부 영수증" class="receipt-img">
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" id="close-receipt-btn">닫기</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="detail-modal">
+            <div class="modal-content">
+                <div class="modal-header">기부 상세 정보</div>
+                <div class="detail-info" id="detail-phone">010-****-****</div>
+                <img id="detail-sig-img" class="detail-sig" src="" alt="서명 이미지">
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" id="close-detail-btn">닫기</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>아이오비(IOB)는 투명한 기부 문화를 증명합니다.</p>
+        </footer>
+    </div>
+
+
+    <script>
+        // ⭐️ 화면 전환 함수 ⭐️
+        window.goToDonation = function() {
+            // 1. 바디 클래스를 바꿔서 배경색과 스크롤 가능 여부 변경
+            document.body.className = 'donation-mode';
             
-            setTimeout(() => { popMsg.innerText = "엄마!!!! 가지마!!!"; }, 1000);
+            // 2. 퀴즈와 3D 곰 화면 숨기기
+            document.getElementById('quiz-app').style.display = 'none';
+            
+            // 3. 기부 시스템 화면 나타내기
+            document.getElementById('donation-app').style.display = 'block';
+            
+            // 맨 위로 스크롤
+            window.scrollTo(0,0);
+        }
+
+        // 퀴즈 문제 및 로직
+        const questions = [
+            { q: "일주일에 <u>배달 음식</u>을 얼마나 자주 시켜 먹나요?", options: [ { text: "주 4회 이상 (VVIP)", score: 20 }, { text: "주 2~3회 정도", score: 15 }, { text: "월 1~2회 아주 가끔", score: 5 }, { text: "거의 안 먹음 (직접 해먹음)", score: 0 } ] },
+            { q: "카페에서 음료를 마실 때, <u>텀블러</u>를 챙기시나요?", options: [ { text: "귀찮아서 매일 일회용 컵", score: 20 }, { text: "일주일에 절반은 일회용 컵", score: 15 }, { text: "가끔 생각나면 텀블러 지참", score: 5 }, { text: "무조건 개인 텀블러 사용", score: 0 } ] },
+            { q: "유튜브, 인스타, 넷플릭스 등 <u>영상 스트리밍</u> 시간은?", options: [ { text: "눈 떠서 잘 때까지 달고 삼", score: 20 }, { text: "하루 3~4시간 정도 시청", score: 15 }, { text: "하루 1시간 이하 시청", score: 5 }, { text: "영상보단 독서나 다른 활동", score: 0 } ] },
+            { q: "가까운 거리(걸어서 15분 이내)를 갈 때 <u>주로 타는 것</u>은?", options: [ { text: "무조건 택시 부름", score: 20 }, { text: "버스 환승해서 감", score: 10 }, { text: "전동 킥보드나 따릉이", score: 5 }, { text: "이어폰 꽂고 걸어감", score: 0 } ] },
+            { q: "유행이 지났거나 질린 <u>옷을 처리하는 방식</u>은?", options: [ { text: "매달 새 옷 사고 헌 옷은 버림", score: 20 }, { text: "계절마다 한 번씩 SPA 옷 구매", score: 15 }, { text: "당근마켓 등 중고거래 활용", score: 5 }, { text: "있는 옷을 최대한 오래 입음", score: 0 } ] }
+        ];
+
+        let currentQ = 0;
+        let totalScore = 0;
+
+        function goPage(pageId) {
+            document.querySelectorAll('#quiz-app .page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function startQuiz() {
+            document.getElementById('page-start').style.background = 'transparent';
+            if(window.danceClips && window.danceClips.length > 0) window.fadeToAction(window.danceClips[0], 0);
+            window.danceInterval = setInterval(window.playNextDance, 10000);
+
+            currentQ = 0; totalScore = 0;
+            renderQ();
+            goPage('page-quiz');
+        }
+
+        function renderQ() {
+            document.getElementById('question-text').innerHTML = questions[currentQ].q;
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            questions[currentQ].options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt.text;
+                btn.onclick = () => {
+                    totalScore += opt.score;
+                    currentQ++;
+                    if (currentQ < questions.length) renderQ();
+                    else triggerDeath(); 
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function triggerDeath() {
+            goPage('page-interim');
+            window.isDead = true; 
+            clearInterval(window.danceInterval);
+            if(window.deathClip) window.fadeToAction(window.deathClip, 0.5);
+        }
+
+        function showResult() {
+            goPage('page-result');
+
+            let topPercent = Math.max(1, 100 - totalScore); 
+            let targetBears = Math.floor(totalScore * 0.15); 
+            if(totalScore > 0 && targetBears === 0) targetBears = 1;
 
             setTimeout(() => {
-                document.body.classList.remove('shake-heavy');
-                
-                const quizBoard = document.querySelector('.quiz-container');
-                if(quizBoard) {
-                    quizBoard.style.transform = "translateY(1500px)";
-                    quizBoard.style.opacity = "0";
-                }
-                
-                // 추락 시 애니메이션 속도를 고정시켜 자연스럽게 떨어지도록 처리
-                document.getElementById('baby-bear').style.transition = "transform 2s, opacity 2s";
-                document.getElementById('mama-bear').style.transition = "transform 2s, opacity 2s";
-                
-                document.getElementById('baby-bear').style.transform = "translateY(1500px)";
-                document.getElementById('mama-bear').style.transform = "translateY(1500px)";
-                document.querySelectorAll('.ice-block').forEach(b => b.style.transform = "translateY(1500px)");
-                
-                setTimeout(() => this.ascend(), 1500);
-            }, 2500);
-        }, 1300);
-    },
+                document.getElementById('gauge-fill').style.height = totalScore + '%';
+                const pointer = document.getElementById('gauge-pointer');
+                pointer.style.bottom = `calc(${totalScore}% - 15px)`;
+                pointer.innerText = `상위 ${topPercent}% 살인범`;
+                pointer.style.opacity = 1;
+            }, 300);
 
-    ascend() {
-        const qPage = document.getElementById('page-quiz');
-        const mBody = document.getElementById('mama-bear').innerHTML;
-        const bBody = document.getElementById('baby-bear').innerHTML;
-        qPage.innerHTML += `<div id="s-m" class="bear soul" style="bottom:-300px; right:25%;"><div class="halo"></div>${mBody}</div>
-                           <div id="s-b" class="bear soul" style="bottom:-300px; left:25%;"><div class="halo"></div>${bBody}</div>`;
-        setTimeout(() => {
-            const sm = document.getElementById('s-m'); const sb = document.getElementById('s-b');
-            sm.style.bottom = "85%"; sm.style.right = "35%";
-            sb.style.bottom = "80%"; sb.style.left = "35%";
-        }, 200);
-        setTimeout(() => this.navigateTo('page-ending'), 9000);
-    },
+            const bearNumEl = document.getElementById('bear-number');
+            let currentBear = 0;
+            
+            if(targetBears === 0) {
+                setTimeout(() => { bearNumEl.style.transform = 'scale(1.5)'; }, 500); return;
+            }
 
-    showResults() {
-        this.navigateTo('page-results');
-        const s = gameState.score;
-        const R = [
-            { range: [36, 40], title: "🔴 36~40점: [환경 연쇄 살인마] \"북극곰 가정 파괴범\"", text: `파괴 수위: 연간 탄소 배출량 약 2.2톤 이상. 이는 매년 <span class="impact-highlight">축구장 5개 넓이의 빙하를 완전히 증발</span>시키는 수치입니다.<br><br>북극곰에게 주는 피해: * <span class="impact-highlight">당신의 생활 방식은 북극곰의 사냥 기간을 연간 24일 단축</span>시킵니다.<br><br>과학계에 따르면 사냥 기간이 20일 줄어들 때마다 <span class="impact-highlight">성체 북극곰의 체중은 30kg 이상 급감</span>합니다. 결국 어미 곰의 체지방률이 20% 미만으로 떨어져 <span class="impact-highlight">젖이 나오지 않게 되고, 이는 새끼 북극곰의 80%가 1년 안에 아사</span>하는 직접적 원인이 됩니다.` },
-            { range: [31, 35], title: "🟠 31~35점: [환경 상습 폭행범] \"빙하 파괴의 주역\"", text: `파괴 수위: 연간 약 1.5톤. 소나무 200그루의 평생 흡수량입니다.<br><br>북극곰에게 주는 피해: * <span class="impact-highlight">당신이 배출한 탄소는 매년 약 45㎡(약 14평)의 얼음판</span>을 녹여 종잇장처럼 만듭니다.<br><br>이로 인해 북극곰은 먹이를 찾기 위해 전보다 <span class="impact-highlight">평균 150km를 더 헤엄</span>쳐야 합니다. 체력이 소진된 북극곰의 <span class="impact-highlight">익사율은 이전보다 50% 이상 증가</span>하며, 당신의 행동이 북극곰을 바다 한가운데서 <span class="impact-highlight">탈진해 죽게 만드는 보이지 않는 손</span>이 됩니다.` },
-            { range: [26, 30], title: "🟡 26~30점: [환경 과실 치사범] \"무심코 던진 돌에 맞는 생태계\"", text: `파괴 수위: 연간 약 1.1톤. 북극해 얼음 두께를 매년 수 센티미터씩 얇게 만듭니다.<br><br>북극곰에게 주는 피해: * 얼음이 일찍 녹으면서 주식인 바다표범 대신 육지 쓰레기를 뒤지지만, 이는 필요 열량의 <span class="impact-highlight">단 7%</span>밖에 채우지 못합니다.<br><br>또한 당신이 배출한 미세 플라스틱은 <span class="impact-highlight">호르몬 체계를 25% 이상 교란</span>시켜 번식 성공률을 떨어뜨리고 북극곰을 '굶주린 부랑자'로 전락시키고 있습니다.` },
-            { range: [21, 25], title: "🟢 21~25점: [환경 방조범] \"지켜보는 척하며 발판을 치우는 자\"", text: `파괴 수위: 연간 0.5톤 이하. 나름의 노력을 하지만 탄소를 배출 중입니다.<br><br>북극곰에게 주는 피해: * <span class="impact-highlight">매년 15㎡(약 4.5평)의 빙하가 보존</span>됩니다. 이는 가족이 <span class="impact-highlight">약 120시간(5일) 동안 더 안전하게 머물며 에너지를 비축할 수 있는 소중한 공간</span>입니다. 하지만 여전히 발생하는 탄소는 민가 쓰레기통을 뒤지는 빈도를 <span class="impact-highlight">매년 2~3회씩 높이는 잠재적 위협</span>이 됩니다.` },
-            { range: [10, 20], title: "🔵 10~20점: [지구 명예 가디언] \"북극곰의 유일한 희망\"", text: `파괴 수위: 탄소 발자국 최소화 실천자.<br><br>북극곰에게 주는 피해: * 당신의 철저한 습관은 <span class="impact-highlight">매년 축구장 절반 넓이의 빙하 결빙 속도를 늦추는 효과</span>가 있습니다.<br><br>당신 덕분에 <span class="impact-highlight">새끼 북극곰이 성체로 자랄 확률이 12.5% 상승</span>합니다. 당신은 북극곰에게 단순한 인간이 아니라, 무너져가는 그들의 <span class="impact-highlight">집을 수리해 주는 유일한 '가족'</span>입니다.` }
-        ];
-        document.getElementById('results-content').innerHTML = R.map(r => `<div class="res-card ${s>=r.range[0]&&s<=r.range[1]?'active-res':''}"><h3>${r.title}</h3><p>${r.text}</p></div>`).join('');
-    },
+            let intervalTime = 2000 / targetBears; 
+            setTimeout(() => {
+                let counter = setInterval(() => {
+                    currentBear++;
+                    bearNumEl.innerText = currentBear;
+                    if (currentBear >= targetBears) {
+                        clearInterval(counter);
+                        bearNumEl.style.transform = 'scale(1.5)';
+                    }
+                }, intervalTime);
+            }, 500);
+        }
+    </script>
 
-    showDance() {
-        this.navigateTo('page-dance');
-        document.getElementById('bgm').pause(); document.getElementById('happy-bgm').play();
-        const container = document.getElementById('dance-container');
-        const m = document.getElementById('mama-bear').cloneNode(true);
-        const b = document.getElementById('baby-bear').cloneNode(true);
-        [m, b].forEach((bear, i) => {
-            bear.style.position = 'relative'; bear.style.left = '0'; bear.style.bottom = '0';
-            bear.classList.add(i===0?'dance-mama':'dance-baby');
-            // 해피엔딩이므로 눈물 제거
-            bear.querySelectorAll('.css-tear').forEach(t => t.remove());
-            container.appendChild(bear);
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+        window.danceClips = []; window.deathClip = null; window.mixer = null;
+        window.currentAction = null; window.isDead = false;
+        let currentDanceIndex = 0;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.5, 9); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); 
+        renderer.setClearColor(0x000000, 0); 
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+        hemiLight.position.set(0, 20, 0); scene.add(hemiLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5); scene.add(dirLight);
+
+        const manager = new THREE.LoadingManager();
+        manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+            document.getElementById('loading-text').innerText = `북극곰 애니메이션 불러오는 중... (${itemsLoaded}/${itemsTotal})`;
+        };
+        manager.onLoad = function ( ) { document.getElementById('loading-screen').style.display = 'none'; };
+
+        const loader = new FBXLoader(manager);
+        
+        loader.load('자동재생.fbx', function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const size = box.getSize(new THREE.Vector3());
+            const scale = 5.5 / Math.max(size.x, size.y, size.z);
+            object.scale.set(scale, scale, scale);
+            const newBox = new THREE.Box3().setFromObject(object);
+            const center = newBox.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -3.8, -center.z); 
+
+            scene.add(object);
+            window.mixer = new THREE.AnimationMixer(object);
+
+            if (object.animations.length > 0) window.danceClips.push(object.animations[0]);
+
+            const dances = ['팔춤.fbx', '백덤블링.fbx', '털어.fbx', '힙합 댄스1.fbx', '힙합 댄스2.fbx'];
+            dances.forEach(file => {
+                loader.load(file, (animObj) => {
+                    if(animObj.animations.length > 0) window.danceClips.push(animObj.animations[0]);
+                });
+            });
+
+            loader.load('죽음.fbx', (animObj) => {
+                if(animObj.animations.length > 0) window.deathClip = animObj.animations[0];
+            });
         });
-        const quotes = ["나를 살려줘서 고마워!!", "옳은 선택을 해줘서 고마워!!", "고맙다 닝겐아!!", "함께 행복해요!!"];
-        const bubble = document.createElement('div'); bubble.className = 'bubble'; b.appendChild(bubble);
-        bubble.innerText = quotes[0];
-        setInterval(() => { bubble.innerText = quotes[Math.floor(Math.random()*quotes.length)]; }, 1000);
-    }
-};
 
-window.onload = () => { document.getElementById('bgm').play().catch(()=>{}); };
-</script>
+        window.fadeToAction = function(clip, duration) {
+            if(!window.mixer || !clip) return;
+            const previousAction = window.currentAction;
+            window.currentAction = window.mixer.clipAction(clip);
+            window.currentAction.reset();
+            window.currentAction.play();
+            if (previousAction) {
+                window.currentAction.crossFadeFrom(previousAction, duration, true);
+            }
+        };
+
+        window.playNextDance = function() {
+            if(window.isDead || window.danceClips.length === 0) return;
+            currentDanceIndex = (currentDanceIndex + 1) % window.danceClips.length;
+            window.fadeToAction(window.danceClips[currentDanceIndex], 0.5);
+        };
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            if (window.mixer) window.mixer.update(delta);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOh3QTQOeLN99jBLnZxYADP0pTXfwce1I",
+            authDomain: "polarbear-c2798.firebaseapp.com",
+            databaseURL: "https://polarbear-c2798-default-rtdb.firebaseio.com",
+            projectId: "polarbear-c2798",
+            storageBucket: "polarbear-c2798.firebasestorage.app",
+            messagingSenderId: "435093899302",
+            appId: "1:435093899302:web:de2ba81a220ce933c6fee7",
+            measurementId: "G-VMEWKMVR3R"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const dummyData = [
+            { isDummy: true, name: "김*우", campaign: "북극곰 서식지 복원 캠페인", amount: "₩50,000", target: "유니세프(UNICEF)", certNum: "UNI-2026-0982", status: "기부 완료", timestamp: new Date("2026-06-30T14:22:00").getTime() },
+            { isDummy: true, name: "이*민", campaign: "빙하 보존 및 기후변화 대응", amount: "₩30,000", target: "그린피스", certNum: "GP-2026-4412", status: "기부 완료", timestamp: new Date("2026-06-30T11:05:00").getTime() },
+            { isDummy: true, name: "박*준", campaign: "북극곰 먹이 공급망 보호", amount: "₩100,000", target: "WWF", certNum: "WWF-2026-1104", status: "기부 완료", timestamp: new Date("2026-06-29T18:40:00").getTime() },
+            { isDummy: true, name: "최*서", campaign: "북극 생태계 조사 지원", amount: "₩20,000", target: "유니세프(UNICEF)", certNum: "UNI-2026-0741", status: "기부 완료", timestamp: new Date("2026-06-29T09:15:00").getTime() },
+            { isDummy: true, name: "정*훈", campaign: "빙하 보존 및 기후변화 대응", amount: "₩50,000", target: "그린피스", certNum: "GP-2026-3981", status: "기부 완료", timestamp: new Date("2026-06-28T15:30:00").getTime() },
+            { isDummy: true, name: "한*아", campaign: "북극곰 서식지 복원 캠페인", amount: "₩15,000", target: "WWF", certNum: "WWF-2026-0902", status: "기부 완료", timestamp: new Date("2026-06-28T13:12:00").getTime() },
+            { isDummy: true, name: "윤*영", campaign: "북극곰 서식지 복원 캠페인", amount: "₩200,000", target: "유니세프(UNICEF)", certNum: "UNI-2026-0512", status: "기부 완료", timestamp: new Date("2026-06-27T17:02:00").getTime() },
+            { isDummy: true, name: "조*민", campaign: "북극곰 먹이 공급망 보호", amount: "₩40,000", target: "그린피스", certNum: "GP-2026-1234", status: "기부 완료", timestamp: new Date("2026-06-26T10:20:00").getTime() }
+        ];
+
+        const listTable = document.getElementById('donation-list');
+        const modal = document.getElementById('signature-modal');
+        const receiptModal = document.getElementById('receipt-modal');
+        const detailModal = document.getElementById('detail-modal');
+        
+        const canvas = document.getElementById('sig-canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function initCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            ctx.strokeStyle = "#1c2d42";
+            ctx.lineWidth = 3;
+            ctx.lineJoin = "round"; ctx.lineCap = "round";
+        }
+
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        document.getElementById('sig-clear-btn').addEventListener('click', clearCanvas);
+
+        function getEventPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const pos = getEventPos(e);
+            ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+            if(e.cancelable) e.preventDefault();
+        }
+
+        function moveDraw(e) {
+            if (!isDrawing) return;
+            const pos = getEventPos(e);
+            ctx.lineTo(pos.x, pos.y); ctx.stroke();
+            if(e.cancelable) e.preventDefault();
+        }
+
+        function stopDraw() { isDrawing = false; }
+
+        canvas.addEventListener('touchstart', startDraw, {passive: false});
+        canvas.addEventListener('touchmove', moveDraw, {passive: false});
+        canvas.addEventListener('touchend', stopDraw);
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', stopDraw);
+
+        document.getElementById('open-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'flex';
+            setTimeout(initCanvas, 50);
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'none';
+            document.getElementById('phone-middle').value = '';
+            document.getElementById('phone-last').value = '';
+            clearCanvas();
+        });
+
+        document.getElementById('close-receipt-btn').addEventListener('click', () => { receiptModal.style.display = 'none'; });
+        document.getElementById('close-detail-btn').addEventListener('click', () => { detailModal.style.display = 'none'; });
+
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            const campaign = document.getElementById('donation-campaign').value;
+            const target = document.getElementById('donation-target').value;
+            const phoneMid = document.getElementById('phone-middle').value;
+            const phoneLast = document.getElementById('phone-last').value;
+
+            if (phoneMid.length < 4 || phoneLast.length < 4) {
+                alert('휴대폰 번호를 정확히 입력해주세요.');
+                return;
+            }
+
+            const phoneStr = `010-${phoneMid}-${phoneLast}`;
+            const maskedPhone = `010-****-${phoneLast}`;
+            const signatureDataUrl = canvas.toDataURL('image/png');
+
+            try {
+                await addDoc(collection(db, "donations"), {
+                    phone: phoneStr,
+                    maskedName: maskedPhone,
+                    campaign: campaign,
+                    target: target,
+                    amount: "₩" + (Math.floor(Math.random() * 5 + 1) * 10000).toLocaleString(),
+                    certNum: "대기중",
+                    status: "승인대기",
+                    signature: signatureDataUrl,
+                    createdAt: serverTimestamp(),
+                    timestamp: Date.now()
+                });
+
+                modal.style.display = 'none';
+                document.getElementById('phone-middle').value = '';
+                document.getElementById('phone-last').value = '';
+                clearCanvas();
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert('저장 중 오류가 발생했습니다.');
+            }
+        });
+
+        function renderTable(firestoreData) {
+            listTable.innerHTML = '';
+            const combined = [...firestoreData, ...dummyData].sort((a, b) => b.timestamp - a.timestamp);
+
+            combined.forEach(data => {
+                const tr = document.createElement('tr');
+                if (!data.isDummy) {
+                    tr.classList.add('clickable-row');
+                    tr.addEventListener('click', () => {
+                        document.getElementById('detail-phone').innerText = data.phone;
+                        document.getElementById('detail-sig-img').src = data.signature;
+                        detailModal.style.display = 'flex';
+                    });
+                }
+
+                let certHtml = data.certNum;
+                if (data.certNum === "UNI-2026-0982") {
+                    certHtml = `<span class="cert-link" data-cert="receipt">UNI-2026-0982</span>`;
+                }
+
+                const statusClass = data.status === "기부 완료" ? "status-complete" : "status-pending";
+
+                tr.innerHTML = `
+                    <td>${data.maskedName || data.name}</td>
+                    <td>${data.campaign}</td>
+                    <td>${data.amount}</td>
+                    <td>${data.target}</td>
+                    <td>${certHtml}</td>
+                    <td><span class="status-badge ${statusClass}">${data.status}</span></td>
+                `;
+                listTable.appendChild(tr);
+            });
+
+            document.querySelectorAll('.cert-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    receiptModal.style.display = 'flex';
+                });
+            });
+        }
+
+        const q = query(collection(db, "donations"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const realData = [];
+            snapshot.forEach((doc) => {
+                const d = doc.data();
+                realData.push({
+                    ...d,
+                    timestamp: d.createdAt ? d.createdAt.toMillis() : Date.now()
+                });
+            });
+            renderTable(realData);
+        });
+
+        async function checkAndAutoAddDaily() {
+            const metaRef = doc(db, "system", "autoAddMeta");
+            const today = new Date().toDateString();
+
+            try {
+                const metaSnap = await getDoc(metaRef);
+                let lastAddedDate = "";
+                if (metaSnap.exists()) { lastAddedDate = metaSnap.data().lastDate; }
+
+                if (lastAddedDate !== today) {
+                    const randomNames = ["김*민", "이*서", "송*현", "홍*훈", "배*우"];
+                    const randomCamps = ["북극곰 서식지 복원 캠페인", "빙하 보존 및 기후변화 대응", "북극곰 먹이 공급망 보호"];
+                    const randomTargets = ["유니세프(UNICEF)", "그린피스", "WWF"];
+                    
+                    const pName = randomNames[Math.floor(Math.random() * randomNames.length)];
+                    const pCamp = randomCamps[Math.floor(Math.random() * randomCamps.length)];
+                    const pTarget = randomTargets[Math.floor(Math.random() * randomTargets.length)];
+                    const pAmount = "₩" + (Math.floor(Math.random() * 10 + 1) * 10000).toLocaleString();
+                    const pCert = "AUTO-" + Math.floor(Math.random() * 9000 + 1000);
+
+                    await addDoc(collection(db, "donations"), {
+                        phone: "시스템자동추가", maskedName: pName, campaign: pCamp, target: pTarget,
+                        amount: pAmount, certNum: pCert, status: "기부 완료", signature: "", 
+                        createdAt: serverTimestamp(), timestamp: Date.now()
+                    });
+
+                    await setDoc(metaRef, { lastDate: today });
+                }
+            } catch(e) { console.log("Auto-add system error:", e); }
+        }
+        checkAndAutoAddDaily();
+    </script>
 </body>
 </html>

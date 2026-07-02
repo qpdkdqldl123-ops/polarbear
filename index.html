@@ -7,11 +7,8 @@
     
     <style>
         :root {
-            /* --- 퀴즈(파트 1) 전용 색상 변수 --- */
             --quiz-primary: #ff4d4d;
             --quiz-btn-bg: rgba(255, 255, 255, 0.9);
-
-            /* --- 기부 시스템(파트 2) 전용 색상 변수 --- */
             --iob-primary: #008ecc;
             --iob-navy: #1c2d42;
             --iob-light-bg: #f8f9fa;
@@ -20,7 +17,6 @@
             --iob-warning: #f39c12;
         }
 
-        /* 공통 바디 설정 */
         body, html { 
             margin: 0; padding: 0; 
             width: 100%; height: 100%; 
@@ -29,16 +25,8 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 상태에 따른 화면 모드 설정 */
-        body.quiz-mode {
-            overflow: hidden; /* 퀴즈는 스크롤 금지 */
-            background: linear-gradient(180deg, #ffffff 0%, #87CEEB 100%);
-        }
-
-        body.donation-mode {
-            overflow: auto; /* 기부 내역은 스크롤 허용 */
-            background-color: var(--iob-light-bg);
-        }
+        body.quiz-mode { overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #87CEEB 100%); }
+        body.donation-mode { overflow: auto; background-color: var(--iob-light-bg); }
 
         /* =========================================
            [파트 1] 퀴즈 모드 스타일 (Three.js 북극곰)
@@ -50,66 +38,43 @@
         .page { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px; }
         .active { display: flex; pointer-events: auto; }
 
-        /* 로딩 화면 */
         #loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; font-size: 1.5rem; font-weight: bold; pointer-events: auto; }
         .spinner { margin-bottom: 20px; width: 50px; height: 50px; border: 5px solid #fff; border-top-color: var(--quiz-primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* 첫 페이지 */
         #page-start { background: linear-gradient(180deg, #ffffff 0%, #87CEEB 100%); }
         .start-image { width: 100%; height: 50vh; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 15px; background-color: #ddd; }
         
-        /* ⭐️ 1. 작게 만든 오디오 재생 버튼 */
         .audio-btn {
-            margin-bottom: 20px;
-            padding: 8px 16px; /* 크기 축소 */
-            font-size: 0.85rem; /* 글자 크기 축소 */
-            font-weight: bold;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: all 0.2s;
+            margin-bottom: 20px; padding: 8px 16px; font-size: 0.85rem; font-weight: bold;
+            background: rgba(0, 0, 0, 0.6); color: white; border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s;
         }
         .audio-btn:active { transform: scale(0.95); background: rgba(0, 0, 0, 0.8); }
-
         .start-btn { width: 90%; padding: 20px; font-size: 1.5rem; font-weight: 800; background: var(--quiz-primary); color: white; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4); }
 
-        /* ⭐️ 2. 퀴즈 페이지 (공간 확보를 위해 줄임) */
-        #page-quiz { justify-content: flex-start; padding-top: 3vh; /* 조금 더 위로 붙임 */ }
-        
+        /* ⭐️ 퀴즈 페이지: 곰이 다 보이도록 선지 크기 대폭 축소 ⭐️ */
+        #page-quiz { justify-content: flex-start; padding-top: 2vh; }
         #question-text { 
-            font-size: 1.4rem; /* 질문 글자 크기 축소 */
-            font-weight: 900; line-height: 1.3; text-align: center; 
-            margin-bottom: 15px; /* 하단 여백 축소 */
-            word-break: keep-all; background: rgba(255,255,255,0.7); 
-            padding: 12px; border-radius: 15px; 
+            font-size: 1.25rem; font-weight: 900; line-height: 1.3; text-align: center; 
+            margin-bottom: 10px; word-break: keep-all; background: rgba(255,255,255,0.7); 
+            padding: 10px 15px; border-radius: 15px; 
         }
-        #question-text u { text-decoration: none; box-shadow: inset 0 -12px 0 rgba(255, 77, 77, 0.3); color: var(--quiz-primary); }
-        
+        #question-text u { text-decoration: none; box-shadow: inset 0 -10px 0 rgba(255, 77, 77, 0.3); color: var(--quiz-primary); }
         .options-container { 
             width: 100%; display: flex; flex-direction: column; 
-            gap: 8px; /* 선지 사이 간격 축소 */
-            max-height: 35vh; /* 선지가 차지하는 최대 높이 축소 */
-            overflow-y: auto; 
+            gap: 6px; max-height: 28vh; overflow-y: auto; 
         }
         .option-btn { 
-            width: 100%; 
-            padding: 14px; /* 선지 안쪽 여백 축소 */
-            font-size: 1rem; /* 선지 글자 크기 축소 */
-            font-weight: bold; background: var(--quiz-btn-bg); 
-            border: 2px solid transparent; border-radius: 12px; 
+            width: 100%; padding: 12px; font-size: 0.95rem; font-weight: bold; 
+            background: var(--quiz-btn-bg); border: 2px solid transparent; border-radius: 10px; 
             cursor: pointer; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
         }
 
-        /* 결과 트리거 페이지 */
         #page-interim { justify-content: flex-start; padding-top: 15vh; }
         .fatal-btn { font-size: 2.2rem; font-weight: 900; padding: 35px 20px; width: 90%; text-align: center; word-break: keep-all; background: #660000; color: #ffcccc; border: 3px solid #ff0000; border-radius: 20px; cursor: pointer; box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), inset 0 0 20px rgba(255, 0, 0, 0.5); text-shadow: 0 0 10px rgba(255, 0, 0, 1); animation: fatalPulse 0.8s infinite alternate; }
         @keyframes fatalPulse { 0% { transform: scale(1); box-shadow: 0 0 20px rgba(255,0,0,0.5); } 100% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255,0,0,1); } }
 
-        /* 최종 결과 페이지 */
         #page-result { justify-content: flex-start; padding-top: 10vh; }
         .result-container { display: flex; width: 100%; height: 40vh; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.8); padding: 20px; border-radius: 20px; box-sizing: border-box;}
         .gauge-section { width: 30%; height: 100%; display: flex; justify-content: center; align-items: flex-end; position: relative; }
@@ -122,7 +87,6 @@
         .bear-count-wrap { font-size: 2rem; font-weight: bold; }
         #bear-number { font-size: 4.5rem; color: var(--quiz-primary); display: inline-block; transition: transform 0.3s; }
         
-        /* 전환 버튼 스타일 */
         .go-donation-btn { margin-top: 30px; padding: 15px 40px; border-radius: 30px; border: none; font-weight: bold; font-size: 1.2rem; background: var(--iob-primary); color: white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,142,204,0.4); animation: pulseBtn 1.5s infinite; }
         @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
@@ -188,6 +152,10 @@
 
 <body class="quiz-mode">
 
+    <audio id="bear-scream" src="크게9.mp3"></audio>
+    <audio id="bgm-quiz" src="배경음악.mp3" loop></audio>
+    <audio id="bgm-donation" src="긍정 노래.mp3" loop></audio>
+
     <div id="quiz-app">
         <div id="canvas-container"></div>
 
@@ -199,10 +167,7 @@
         <div id="ui-container">
             <div id="page-start" class="page active">
                 <img src="첫페이지.jpg" alt="북극곰" class="start-image" onerror="this.src='https://via.placeholder.com/600x800?text=Image'">
-                
-                <audio id="bear-scream" src="크게9.mp3"></audio>
                 <button class="audio-btn" onclick="playScream()">🔊 북극곰 비명소리 듣기</button>
-
                 <button class="start-btn" onclick="startQuiz()">북극곰 구하러 가기</button>
             </div>
 
@@ -336,11 +301,18 @@
             audio.play();
         }
 
+        // ⭐️ 기부 페이지로 넘어갈 때 BGM 체인지 ⭐️
         window.goToDonation = function() {
             document.body.className = 'donation-mode';
             document.getElementById('quiz-app').style.display = 'none';
             document.getElementById('donation-app').style.display = 'block';
             window.scrollTo(0,0);
+
+            // 배경음악 중단, 긍정 노래 시작
+            document.getElementById('bgm-quiz').pause();
+            const bgmDonation = document.getElementById('bgm-donation');
+            bgmDonation.volume = 0.5; // 볼륨 조절 (0.0 ~ 1.0)
+            bgmDonation.play().catch(e => console.log('Audio error:', e));
         }
 
         const questions = [
@@ -359,14 +331,21 @@
             document.getElementById(pageId).classList.add('active');
         }
 
+        // ⭐️ 퀴즈 시작할 때 배경음악 재생 ⭐️
         function startQuiz() {
             document.getElementById('page-start').style.background = 'transparent';
             if(window.danceClips && window.danceClips.length > 0) window.fadeToAction(window.danceClips[0], 0);
             window.danceInterval = setInterval(window.playNextDance, 10000);
 
-            const audio = document.getElementById('bear-scream');
-            audio.pause();
-            audio.currentTime = 0;
+            // 비명소리 정지
+            const scream = document.getElementById('bear-scream');
+            scream.pause();
+            scream.currentTime = 0;
+
+            // 배경음악 재생
+            const bgmQuiz = document.getElementById('bgm-quiz');
+            bgmQuiz.volume = 0.5;
+            bgmQuiz.play().catch(e => console.log('Audio error:', e));
 
             currentQ = 0; totalScore = 0;
             renderQ();
@@ -469,14 +448,14 @@
             const box = new THREE.Box3().setFromObject(object);
             const size = box.getSize(new THREE.Vector3());
             
-            // ⭐️ 3. 크기를 살짝 줄여서 화면 밖으로 나가지 않게 함 (5.5 -> 4.8)
-            const scale = 4.8 / Math.max(size.x, size.y, size.z);
+            // ⭐️ 곰이 화면에 완전히 들어오도록 크기를 약간 줄임
+            const scale = 4.2 / Math.max(size.x, size.y, size.z);
             object.scale.set(scale, scale, scale);
             const newBox = new THREE.Box3().setFromObject(object);
             const center = newBox.getCenter(new THREE.Vector3());
             
-            // ⭐️ 3. Y축 위치를 끌어올려 곰 발이 보이도록 함 (-3.8 -> -2.8)
-            object.position.set(-center.x, -2.8, -center.z); 
+            // ⭐️ 곰의 Y축 위치를 대폭 위로 끌어올려서 다리가 완전히 보이게 함 (-2.8 -> -1.5)
+            object.position.set(-center.x, -1.5, -center.z); 
 
             scene.add(object);
             window.mixer = new THREE.AnimationMixer(object);
